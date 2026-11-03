@@ -1,0 +1,77 @@
+{
+  "users": [
+    {
+      "id": 1,
+      "username": "camille_ensba",
+      "email": "camille@beauxartsparis.fr",
+      "password_hash": "$2b$10$.QliiZTkXubzVNFLT6nSrOkFMuGQMBNw23L063Be3m9G4LdfCjGky",
+      "school": "Beaux-Arts de Paris",
+      "atelier": "Atelier Peinture",
+      "bio": "4e année",
+      "created_at": "2026-11-03T15:13:14.864Z"
+    },
+    {
+      "id": 2,
+      "username": "julien_lyon",
+      "email": "julien@ensba-lyon.fr",
+      "password_hash": "$2b$10$.QliiZTkXubzVNFLT6nSrOkFMuGQMBNw23L063Be3m9G4LdfCjGky",
+      "school": "ENSBA Lyon",
+      "atelier": "Atelier Bois",
+      "bio": "Sculpture",
+      "created_at": "2026-11-03T15:13:14.865Z"
+    },
+    {
+      "id": 3,
+      "username": "ines_ensad",
+      "email": "ines@ensad.fr",
+      "password_hash": "$2b$10$.QliiZTkXubzVNFLT6nSrOkFMuGQMBNw23L063Be3m9G4LdfCjGky",
+      "school": "ÉnsAD Paris",
+      "atelier": "Design Textile",
+      "bio": "Chutes de soies",
+      "created_at": "2026-11-03T15:13:14.865Z"
+    }
+  ],
+  "items": [
+    {
+      "id": 1,
+      "user_id": 1,
+      "title": "5 Châssis entoilés en lin brut (80x100cm)",
+      "category": "Toiles & Châssis",
+      "exchange_type": "Gratuit",
+      "price": 0,
+      "location": "Paris 6e - Beaux-Arts, Cour vitrée",
+      "description": "Toiles prêtes à peindre. À venir chercher avant vendredi.",
+      "image_url": "https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?w=800",
+      "status": "available",
+      "created_at": "2026-11-03T15:13:14.865Z"
+    },
+    {
+      "id": 2,
+      "user_id": 2,
+      "title": "Lot de chutes de contreplaqué bouleau",
+      "category": "Bois",
+      "exchange_type": "Gratuit",
+      "price": 0,
+      "location": "Lyon - ENSBA, Atelier Menuiserie",
+      "description": "Découpes propres d’environ 60x90cm pour maquettes ou socles.",
+      "image_url": "https://images.unsplash.com/photo-1546484396-fb3fc6f95f98?w=800",
+      "status": "available",
+      "created_at": "2026-11-03T15:13:14.865Z"
+    },
+    {
+      "id": 3,
+      "user_id": 3,
+      "title": "Coupons de soie sauvage et feutre dense",
+      "category": "Tissus & Fibres",
+      "exchange_type": "Échange",
+      "price": 0,
+      "location": "Paris 5e - Arts Déco",
+      "description": "Chutes nobles. Échange contre pigments ou fil.",
+      "image_url": "https://images.unsplash.com/photo-1584917865442-de89df76afd3?w=800",
+      "status": "available",
+      "created_at": "2026-11-03T15:13:14.865Z"
+    }
+  ],
+  "conversations": [],
+  "messages": []
+}
