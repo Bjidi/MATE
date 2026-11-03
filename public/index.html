@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MATÉRIAUX — Bourse Circulaire des Beaux-Arts</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+
+  <!-- Top Header -->
+  <header>
+    <div class="brand" onclick="app.showHome()">
+      <span class="logo">MATÉRIAUX</span>
+      <span class="sublogo">Bourse Circulaire · Beaux-Arts</span>
+    </div>
+    <div class="nav-actions">
+      <button class="btn btn-primary" onclick="app.openPublishModal()">+ Publier un matériau</button>
+      <button class="btn" id="nav-messages-btn" onclick="app.openMessagesModal()">
+        <span>Messages</span>
+        <span id="unread-badge" class="badge-count" style="display:none;">0</span>
+      </button>
+      <div id="auth-nav-area"></div>
+    </div>
+  </header>
+
+  <!-- Main Container -->
+  <main class="container">
+    <section class="hero">
+      <div>
+        <div class="badge badge-black" style="margin-bottom:0.8rem; display:inline-block;">Réseau Écoles d’Art · France</div>
+        <h1 class="hero-title">Rien ne se perd, tout se transforme dans les ateliers.</h1>
+        <p class="hero-subtitle">
+          Plateforme minimale de troc, don et réemploi de matériaux créatifs pour étudiants et artistes des Écoles Supérieures d’Art (Beaux-Arts, ÉnsAD, Villa Arson, etc.).
+        </p>
+      </div>
+      <div>
+        <input type="text" id="search-input" class="search-input" placeholder="Rechercher bois, lin, pigments, atelier..." oninput="app.handleSearch(this.value)">
+      </div>
+    </section>
+
+    <!-- Filters Section -->
+    <section class="filters-bar">
+      <div class="filter-row">
+        <span class="filter-label">Catégorie:</span>
+        <button class="filter-pill active" data-cat="Tous" onclick="app.setCategory('Tous')">Tous</button>
+        <button class="filter-pill" data-cat="Toiles & Châssis" onclick="app.setCategory('Toiles & Châssis')">Toiles & Châssis</button>
+        <button class="filter-pill" data-cat="Bois" onclick="app.setCategory('Bois')">Bois & Découpes</button>
+        <button class="filter-pill" data-cat="Tissus & Fibres" onclick="app.setCategory('Tissus & Fibres')">Tissus & Fibres</button>
+        <button class="filter-pill" data-cat="Pigments & Peintures" onclick="app.setCategory('Pigments & Peintures')">Pigments & Peintures</button>
+        <button class="filter-pill" data-cat="Scénographie" onclick="app.setCategory('Scénographie')">Scéno & Socles</button>
+        <button class="filter-pill" data-cat="Métal & Verre" onclick="app.setCategory('Métal & Verre')">Métal & Verre</button>
+        <button class="filter-pill" data-cat="Outils & Équipement" onclick="app.setCategory('Outils & Équipement')">Outils</button>
+      </div>
+      <div class="filter-row">
+        <span class="filter-label">Condition:</span>
+        <button class="filter-pill active" data-type="Tous" onclick="app.setType('Tous')">Tout type</button>
+        <button class="filter-pill" data-type="Gratuit" onclick="app.setType('Gratuit')">● Don gratuit</button>
+        <button class="filter-pill" data-type="Échange" onclick="app.setType('Échange')">⇄ Troc / Échange</button>
+        <button class="filter-pill" data-type="Prix" onclick="app.setType('Prix')">€ Prix symbolique</button>
+      </div>
+    </section>
+
+    <!-- Items Grid -->
+    <section>
+      <div class="items-grid" id="items-grid"></div>
+    </section>
+  </main>
+
+  <!-- MODAL: Material Detail -->
+  <div class="modal-overlay" id="detail-modal">
+    <div class="modal-content" style="max-width: 780px;">
+      <div class="modal-header">
+        <div>
+          <span id="detail-category" class="badge badge-black"></span>
+          <span id="detail-type" class="badge badge-white" style="margin-left:0.4rem;"></span>
+        </div>
+        <button class="modal-close" onclick="app.closeModal('detail-modal')">&times;</button>
+      </div>
+      <div id="detail-body"></div>
+    </div>
+  </div>
+  <!-- MODAL: Publish Material -->
+  <div class="modal-overlay" id="publish-modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 style="font-size:1.3rem; font-weight:800; letter-spacing:-0.03em;">PUBLIER UN MATÉRIAU</h2>
+        <button class="modal-close" onclick="app.closeModal('publish-modal')">&times;</button>
+      </div>
+      <form id="publish-form" onsubmit="app.handlePublishSubmit(event)">
+        <div class="form-group">
+          <label class="form-label">Titre du matériau / lot *</label>
+          <input type="text" name="title" class="form-input" placeholder="ex: 3 Châssis 50x70cm, Chutes de contreplaqué..." required>
+        </div>
+
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:1rem;">
+          <div class="form-group">
+            <label class="form-label">Catégorie *</label>
+            <select name="category" class="form-select" required>
+              <option value="Toiles & Châssis">Toiles & Châssis</option>
+              <option value="Bois">Bois & Découpes</option>
+              <option value="Tissus & Fibres">Tissus & Fibres</option>
+              <option value="Pigments & Peintures">Pigments & Peintures</option>
+              <option value="Scénographie">Scénographie & Socles</option>
+              <option value="Métal & Verre">Métal & Verre</option>
+              <option value="Outils & Équipement">Outils & Équipement</option>
+              <option value="Autres">Autres matériaux</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Mode de cession *</label>
+            <select name="exchange_type" id="post-exchange-type" class="form-select" onchange="app.handleTypeChange(this.value)" required>
+              <option value="Gratuit">Gratuit (Don à l'atelier)</option>
+              <option value="Échange">Troc / Échange contre autre matériau</option>
+              <option value="Prix">Prix symbolique (€)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group" id="price-field" style="display:none;">
+          <label class="form-label">Prix symbolique en Euros (€)</label>
+          <input type="number" step="0.5" name="price" class="form-input" placeholder="ex: 5">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Localisation / Atelier où récupérer *</label>
+          <input type="text" name="location" class="form-input" placeholder="ex: Beaux-Arts Paris - Atelier Peinture, casier 14" required>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Description, dimensions & état *</label>
+          <textarea name="description" class="form-textarea" placeholder="Dimensions, quantité, état, et vos disponibilités pour le retrait..." required></textarea>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Photo du matériau</label>
+          <div class="dropzone" onclick="document.getElementById('file-upload').click()">
+            <p style="font-family:var(--font-mono); font-size:0.8rem; font-weight:600;">[ CLIQUEZ POUR CHOISIR UNE IMAGE ]</p>
+            <input type="file" id="file-upload" name="image" accept="image/*" style="display:none;" onchange="app.handleFileSelect(event)">
+            <img id="image-preview" class="preview-thumb" style="display:none;" alt="Aperçu">
+          </div>
+        </div>
+
+        <div style="margin-top:1.5rem; display:flex; justify-content:flex-end; gap:1rem;">
+          <button type="button" class="btn" onclick="app.closeModal('publish-modal')">Annuler</button>
+          <button type="submit" class="btn btn-primary" id="publish-submit-btn">Diffuser l'annonce</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: Messaging / Direct Chat -->
+  <div class="modal-overlay" id="messages-modal">
+    <div class="modal-content" style="max-width: 900px; padding: 1.5rem;">
+      <div class="modal-header" style="margin-bottom:1rem; padding-bottom:0.8rem;">
+        <div style="display:flex; align-items:center; gap:0.8rem;">
+          <h2 style="font-size:1.3rem; font-weight:800; letter-spacing:-0.03em;">MESSAGERIE PRIVÉE</h2>
+          <span class="badge badge-black" id="chat-status-badge">DIRECT</span>
+        </div>
+        <button class="modal-close" onclick="app.closeModal('messages-modal')">&times;</button>
+      </div>
+
+      <div class="messaging-container">
+        <div class="inbox-list" id="inbox-list"></div>
+
+        <div class="chat-window" id="chat-window">
+          <div class="chat-header" id="chat-header">
+            <div>
+              <strong id="chat-with-user" style="font-size:0.95rem;">Sélectionnez une conversation</strong>
+              <div id="chat-item-context" style="font-size:0.75rem; color:var(--text-muted); font-family:var(--font-mono);"></div>
+            </div>
+          </div>
+          <div class="chat-messages" id="chat-messages">
+            <div style="margin:auto; color:var(--text-muted); font-family:var(--font-mono); font-size:0.85rem;">
+              Sélectionnez une conversation ou contactez un créateur.
+            </div>
+          </div>
+          <div class="chat-input-area" id="chat-input-area" style="display:none;">
+            <input type="text" id="chat-input" class="form-input" placeholder="Écrire un message..." onkeydown="if(event.key==='Enter') app.sendMessage()">
+            <button class="btn btn-primary" onclick="app.sendMessage()">Envoyer</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: Auth -->
+  <div class="modal-overlay" id="auth-modal">
+    <div class="modal-content" style="max-width: 480px;">
+      <div class="modal-header">
+        <h2 id="auth-modal-title" style="font-size:1.3rem; font-weight:800; letter-spacing:-0.03em;">CONNEXION</h2>
+        <button class="modal-close" onclick="app.closeModal('auth-modal')">&times;</button>
+      </div>
+
+      <div style="background:#f4f4f4; border:1px solid #ddd; padding:0.8rem; margin-bottom:1.2rem; font-family:var(--font-mono); font-size:0.72rem;">
+        <strong>COMPTES TEST EN 1 CLIC (Démo) :</strong>
+        <div style="display:flex; gap:0.5rem; margin-top:0.5rem; flex-wrap:wrap;">
+          <button class="btn btn-small" type="button" onclick="app.quickLogin('camille_ensba')">Camille (Paris)</button>
+          <button class="btn btn-small" type="button" onclick="app.quickLogin('julien_lyon')">Julien (Lyon)</button>
+          <button class="btn btn-small" type="button" onclick="app.quickLogin('ines_ensad')">Inès (Arts Déco)</button>
+        </div>
+      </div>
+
+      <form id="login-form" onsubmit="app.handleLoginSubmit(event)">
+        <div class="form-group">
+          <label class="form-label">Identifiant (Nom ou Email)</label>
+          <input type="text" name="identifier" class="form-input" placeholder="ex: camille_ensba" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Mot de passe</label>
+          <input type="password" name="password" class="form-input" placeholder="••••••••" required>
+        </div>
+        <div style="margin-top:1.2rem;">
+          <button type="submit" class="btn btn-primary" style="width:100%; justify-content:center;">Se connecter</button>
+        </div>
+        <p style="text-align:center; margin-top:1rem; font-size:0.8rem;">
+          Pas encore de compte ? <a href="#" style="color:#000; font-weight:bold;" onclick="app.toggleAuthMode('register'); return false;">Créer un profil</a>
+        </p>
+      </form>
+
+      <form id="register-form" style="display:none;" onsubmit="app.handleRegisterSubmit(event)">
+        <div class="form-group">
+          <label class="form-label">Nom d’utilisateur *</label>
+          <input type="text" name="username" class="form-input" placeholder="ex: antoine_sculpture" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Email étudiant ou pro *</label>
+          <input type="email" name="email" class="form-input" placeholder="ex: antoine@beauxarts.fr" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Mot de passe *</label>
+          <input type="password" name="password" class="form-input" placeholder="Min. 6 caractères" required minlength="6">
+        </div>
+        <div class="form-group">
+          <label class="form-label">École des Beaux-Arts / Établissement</label>
+          <input type="text" name="school" class="form-input" placeholder="ex: Beaux-Arts de Paris, ENSBA Lyon...">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Atelier / Spécialité</label>
+          <input type="text" name="atelier" class="form-input" placeholder="ex: Atelier Peinture, Sculpture...">
+        </div>
+        <div style="margin-top:1.2rem;">
+          <button type="submit" class="btn btn-primary" style="width:100%; justify-content:center;">Créer mon profil</button>
+        </div>
+        <p style="text-align:center; margin-top:1rem; font-size:0.8rem;">
+          Déjà inscrit ? <a href="#" style="color:#000; font-weight:bold;" onclick="app.toggleAuthMode('login'); return false;">Connexion</a>
+        </p>
+      </form>
+    </div>
+  </div>
+
+  <script src="/app.js"></script>
+</body>
+</html>
+
