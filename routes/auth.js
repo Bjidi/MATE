@@ -192,7 +192,7 @@ router.post('/forgot-password', async (req, res) => {
 
     res.json({
       message: 'Un code de vérification à 6 chiffres a été généré.',
-      dev_code: mailResult.devMode ? code : undefined
+      dev_code: (!mailResult.sent || mailResult.devMode) ? code : undefined
     });
   } catch (err) {
     console.error('Forgot password error:', err);
