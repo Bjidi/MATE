@@ -119,4 +119,122 @@ router.get('/me', authenticateToken, (req, res) => {
   }
 });
 
+const nodemailer = require('nodemailer');
+
+// 内存验证码存储 (email -> { code, expiresAt })
+const resetCodes = new Map();
+
+// 邮件发送辅助函数
+async function sendResetEmail(toEmail, code) {
+  const host = process.env.SMTP_HOST;
+  const user = process.env.SMTP_USER;
+  const pass = process.env.SMTP_PASS;
+
+  if (host && user && pass) {
+    try {
+      const transporter = nodemailer.createTransport({
+        host,
+        port: Number(process.env.SMTP_PORT) || 587,
+        secure: process.env.SMTP_SECURE === 'true',
+        auth: { user, pass }
+      });
+
+      await transporter.sendMail({
+        from: process.env.SMTP_FROM || `"MATE Beaux-Arts" <${user}>`,
+        to: toEmail,
+        subject: '[MATE] Code de réinitialisation de mot de passe',
+        text: `Bonjour,\n\nVoici votre code à 6 chiffres pour réinitialiser votre mot de passe sur la plateforme MATE : ${code}\n\nCe code est valable pendant 15 minutes.\n\nSi vous n’êtes pas à l’origine de cette demande, ignorez cet email.\n\nL’équipe MATE`,
+        html: `
+          <div style="font-family:sans-serif; max-width:500px; border:2px solid #000; padding:2rem;">
+            <h1 style="font-size:1.5rem; margin-top:0;">MATE · Beaux-Arts</h1>
+            <p>Bonjour,</p>
+            <p>Voici votre code de vérification pour réinitialiser votre mot de passe :</p>
+            <div style="font-size:2rem; font-weight:bold; letter-spacing:0.2em; padding:1rem; background:#f4f4f4; text-align:center; border:1px solid #000; margin:1.5rem 0;">
+              ${code}
+            </div>
+            <p style="font-size:0.85rem; color:#666;">Ce code est valable pendant 15 minutes.</p>
+          </div>
+        `
+      });
+      console.log(`[EMAIL] Code envoyé avec succès à ${toEmail}`);
+      return { sent: true };
+    } catch (err) {
+      console.error('[EMAIL ERROR]', err);
+      return { sent: false, error: err.message };
+    }
+  } else {
+    console.log(`[EMAIL DEV MODE] SMTP non configuré. Code pour ${toEmail} : ${code}`);
+    return { sent: false, devMode: true };
+  }
+}
+
+// 申请重置密码（发送验证码）
+router.post('/forgot-password', async (req, res) => {
+  const { email } = req.body;
+  if (!email || !email.trim()) {
+    return res.status(400).json({ error: 'Veuillez saisir votre adresse email.' });
+  }
+
+  const cleanEmail = email.trim().toLowerCase();
+
+  try {
+    const user = db.prepare('SELECT id, email FROM users WHERE email = ?').get(cleanEmail);
+    if (!user) {
+      return res.status(404).json({ error: 'Aucun compte associé à cette adresse email.' });
+    }
+
+    // 生成 6 位随机验证码
+    const code = Math.floor(100000 + Math.random() * 900000).toString();
+    const expiresAt = Date.now() + 15 * 60 * 1000; // 15分钟有效
+    resetCodes.set(cleanEmail, { code, expiresAt });
+
+    const mailResult = await sendResetEmail(cleanEmail, code);
+
+    res.json({
+      message: 'Un code de vérification à 6 chiffres a été généré.',
+      dev_code: mailResult.devMode ? code : undefined
+    });
+  } catch (err) {
+    console.error('Forgot password error:', err);
+    res.status(500).json({ error: 'Erreur lors de la demande de réinitialisation.' });
+  }
+});
+
+// 输入验证码与新密码，完成重置
+router.post('/reset-password', (req, res) => {
+  const { email, code, new_password } = req.body;
+  if (!email || !code || !new_password) {
+    return res.status(400).json({ error: 'Email, code et nouveau mot de passe requis.' });
+  }
+
+  const cleanEmail = email.trim().toLowerCase();
+  const record = resetCodes.get(cleanEmail);
+
+  if (!record) {
+    return res.status(400).json({ error: 'Aucun code demandé pour cette adresse ou code déjà utilisé.' });
+  }
+
+  if (Date.now() > record.expiresAt) {
+    resetCodes.delete(cleanEmail);
+    return res.status(400).json({ error: 'Ce code a expiré. Veuillez refaire une demande.' });
+  }
+
+  if (record.code !== String(code).trim()) {
+    return res.status(400).json({ error: 'Code de vérification incorrect.' });
+  }
+
+  try {
+    const salt = bcrypt.genSaltSync(10);
+    const newHash = bcrypt.hashSync(new_password, salt);
+
+    db.prepare('UPDATE users SET password_hash = ? WHERE email = ?').run(newHash, cleanEmail);
+    resetCodes.delete(cleanEmail);
+
+    res.json({ message: 'Votre mot de passe a été réinitialisé avec succès ! Vous pouvez maintenant vous connecter.' });
+  } catch (err) {
+    console.error('Reset password error:', err);
+    res.status(500).json({ error: 'Erreur lors de la mise à jour du mot de passe.' });
+  }
+});
+
 module.exports = { router, authenticateToken, JWT_SECRET };

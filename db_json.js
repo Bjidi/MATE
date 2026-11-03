@@ -131,6 +131,16 @@ const jsonDb = {
           save();
           return { lastInsertRowid: id };
         }
+        if (q.includes('UPDATE users SET password_hash = ? WHERE email = ?')) {
+          const [hash, email] = params;
+          const u = data.users.find(x => x.email.toLowerCase() === String(email).toLowerCase());
+          if (u) {
+            u.password_hash = hash;
+            save();
+            return { changes: 1 };
+          }
+          return { changes: 0 };
+        }
         if (q.includes('UPDATE items SET status = ? WHERE id = ?')) {
           const it = data.items.find(x => x.id === Number(params[1]));
           if (it) it.status = params[0];

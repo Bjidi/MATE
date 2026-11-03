@@ -207,17 +207,21 @@
           <input type="text" name="identifier" class="form-input" placeholder="ex: camille_ensba" required>
         </div>
         <div class="form-group">
-          <label class="form-label">Mot de passe</label>
-          <input type="password" name="password" class="form-input" placeholder="••••••••" required>
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <label class="form-label" style="margin-bottom:0;">Mot de passe</label>
+            <a href="#" style="font-size:0.75rem; color:var(--text-muted); font-family:var(--font-mono);" onclick="app.toggleAuthMode('forgot'); return false;">Mot de passe oublié ?</a>
+          </div>
+          <input type="password" name="password" class="form-input" style="margin-top:0.4rem;" placeholder="••••••••" required>
         </div>
         <div style="margin-top:1.2rem;">
           <button type="submit" class="btn btn-primary" style="width:100%; justify-content:center;">Se connecter</button>
         </div>
         <p style="text-align:center; margin-top:1rem; font-size:0.8rem;">
-          Pas encore de compte ? <a href="#" style="color:#000; font-weight:bold;" onclick="app.toggleAuthMode('register'); return false;">Créer un profil</a>
+          Pas encore de compte ? <a href="#" style="color:#000; font-weight:bold;" onclick="app.toggleAuthMode('register'); return false;">Créer un compte MATE</a>
         </p>
       </form>
 
+      <!-- Register Form -->
       <form id="register-form" style="display:none;" onsubmit="app.handleRegisterSubmit(event)">
         <div class="form-group">
           <label class="form-label">Nom d’utilisateur *</label>
@@ -236,14 +240,53 @@
           <input type="text" name="school" class="form-input" placeholder="ex: TALM-Tours, Beaux-Arts de Paris...">
         </div>
         <div class="form-group">
-          <label class="form-label">Atelier / Spécialité</label>
-          <input type="text" name="atelier" class="form-input" placeholder="ex: Atelier Peinture, Sculpture...">
+          <label class="form-label">Spécialité / Atelier</label>
+          <input type="text" name="atelier" class="form-input" placeholder="ex: Option Art, Design, Communication, etc.">
         </div>
         <div style="margin-top:1.2rem;">
-          <button type="submit" class="btn btn-primary" style="width:100%; justify-content:center;">Créer mon profil</button>
+          <button type="submit" class="btn btn-primary" style="width:100%; justify-content:center;">Créer mon compte MATE</button>
         </div>
         <p style="text-align:center; margin-top:1rem; font-size:0.8rem;">
           Déjà inscrit ? <a href="#" style="color:#000; font-weight:bold;" onclick="app.toggleAuthMode('login'); return false;">Connexion</a>
+        </p>
+      </form>
+
+      <!-- Forgot Password Form: Step 1 (Demande de code) -->
+      <form id="forgot-form" style="display:none;" onsubmit="app.handleForgotSubmit(event)">
+        <p style="font-size:0.82rem; color:var(--text-muted); margin-bottom:1rem; line-height:1.4;">
+          Saisissez votre adresse email de compte. Un code de vérification à 6 chiffres vous sera envoyé pour réinitialiser votre mot de passe.
+        </p>
+        <div class="form-group">
+          <label class="form-label">Email de votre compte *</label>
+          <input type="email" name="email" class="form-input" placeholder="ex: sharkblaste@outlook.com" required>
+        </div>
+        <div style="margin-top:1.2rem;">
+          <button type="submit" class="btn btn-primary" style="width:100%; justify-content:center;">Envoyer le code</button>
+        </div>
+        <p style="text-align:center; margin-top:1rem; font-size:0.8rem;">
+          <a href="#" style="color:#000;" onclick="app.toggleAuthMode('login'); return false;">← Retour à la connexion</a>
+        </p>
+      </form>
+
+      <!-- Reset Password Form: Step 2 (Saisie du code et nouveau mot de passe) -->
+      <form id="reset-form" style="display:none;" onsubmit="app.handleResetSubmit(event)">
+        <p style="font-size:0.82rem; color:var(--text-muted); margin-bottom:1rem; line-height:1.4;">
+          Entrez le code reçu et définissez votre nouveau mot de passe.
+        </p>
+        <input type="hidden" name="email" id="reset-email-input">
+        <div class="form-group">
+          <label class="form-label">Code de vérification (6 chiffres) *</label>
+          <input type="text" name="code" class="form-input" style="letter-spacing:0.3em; font-family:var(--font-mono); font-size:1.1rem; text-align:center;" placeholder="123456" maxlength="6" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Nouveau mot de passe *</label>
+          <input type="password" name="new_password" class="form-input" placeholder="Min. 6 caractères" required minlength="6">
+        </div>
+        <div style="margin-top:1.2rem;">
+          <button type="submit" class="btn btn-primary" style="width:100%; justify-content:center;">Confirmer le nouveau mot de passe</button>
+        </div>
+        <p style="text-align:center; margin-top:1rem; font-size:0.8rem;">
+          <a href="#" style="color:#000;" onclick="app.toggleAuthMode('login'); return false;">← Annuler et se connecter</a>
         </p>
       </form>
     </div>

@@ -33,7 +33,7 @@ const app = {
       area.innerHTML = `
         <div style="display:flex; align-items:center; gap:0.6rem;">
           <span style="font-family:var(--font-mono); font-size:0.75rem; border:1px solid #000; padding:0.3rem 0.6rem;">
-            ● ${this.escape(this.user.username)} (${this.escape(this.user.school || 'Beaux-Arts')})
+            ● ${this.escape(this.user.username)} (${this.escape(this.user.email || '')})
           </span>
           <button class="btn btn-small" onclick="app.logout()">Déconnexion</button>
         </div>
@@ -534,15 +534,101 @@ const app = {
   toggleAuthMode(mode) {
     const loginForm = document.getElementById('login-form');
     const regForm = document.getElementById('register-form');
+    const forgotForm = document.getElementById('forgot-form');
+    const resetForm = document.getElementById('reset-form');
     const title = document.getElementById('auth-modal-title');
+
+    if (loginForm) loginForm.style.display = 'none';
+    if (regForm) regForm.style.display = 'none';
+    if (forgotForm) forgotForm.style.display = 'none';
+    if (resetForm) resetForm.style.display = 'none';
+
     if (mode === 'login') {
       loginForm.style.display = 'block';
-      regForm.style.display = 'none';
       title.innerText = 'CONNEXION';
-    } else {
-      loginForm.style.display = 'none';
+    } else if (mode === 'register') {
       regForm.style.display = 'block';
-      title.innerText = 'CRÉER UN COMPTE ATELIER';
+      title.innerText = 'CRÉER UN COMPTE MATE';
+    } else if (mode === 'forgot') {
+      forgotForm.style.display = 'block';
+      title.innerText = 'MOT DE PASSE OUBLIÉ';
+    } else if (mode === 'reset') {
+      resetForm.style.display = 'block';
+      title.innerText = 'RÉINITIALISER LE MOT DE PASSE';
+    }
+  },
+
+  async handleForgotSubmit(event) {
+    event.preventDefault();
+    const form = event.target;
+    const btn = form.querySelector('button[type="submit"]');
+    const email = form.email.value.trim();
+    if (!email) return;
+
+    btn.disabled = true;
+    btn.innerText = 'Génération du code...';
+
+    try {
+      const res = await fetch('/api/auth/forgot-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email })
+      });
+      const data = await res.json();
+      if (res.ok) {
+        // 存储正在重置密码的邮箱
+        this._pendingResetEmail = email;
+        const resetEmailInput = document.getElementById('reset-email-input');
+        if (resetEmailInput) resetEmailInput.value = email;
+
+        if (data.dev_code) {
+          alert(`Code de vérification généré pour ${email} : ${data.dev_code}\n(En production avec SMTP configuré, le code arrive directement par email)`);
+        } else {
+          alert(`Un code de vérification à 6 chiffres a été envoyé à : ${email}`);
+        }
+        this.toggleAuthMode('reset');
+      } else {
+        alert(data.error || 'Erreur lors de l’envoi.');
+      }
+    } catch (e) {
+      alert('Erreur réseau.');
+    } finally {
+      btn.disabled = false;
+      btn.innerText = 'Envoyer le code';
+    }
+  },
+
+  async handleResetSubmit(event) {
+    event.preventDefault();
+    const form = event.target;
+    const btn = form.querySelector('button[type="submit"]');
+    const email = form.email.value.trim() || this._pendingResetEmail;
+    const code = form.code.value.trim();
+    const new_password = form.new_password.value;
+
+    if (!email || !code || !new_password) return alert('Tous les champs sont requis.');
+
+    btn.disabled = true;
+    btn.innerText = 'Mise à jour...';
+
+    try {
+      const res = await fetch('/api/auth/reset-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, code, new_password })
+      });
+      const data = await res.json();
+      if (res.ok) {
+        alert(data.message || 'Mot de passe modifié avec succès ! Connectez-vous avec votre nouveau mot de passe.');
+        this.toggleAuthMode('login');
+      } else {
+        alert(data.error || 'Erreur de réinitialisation.');
+      }
+    } catch (e) {
+      alert('Erreur réseau.');
+    } finally {
+      btn.disabled = false;
+      btn.innerText = 'Confirmer le nouveau mot de passe';
     }
   },
 
