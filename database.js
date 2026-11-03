@@ -26,19 +26,14 @@ function initDatabase() {
 
   const check = db.prepare('SELECT COUNT(*) as count FROM users').get();
   if (!check || check.count === 0) {
-    console.log('[DB] Initialisation des données de démo...');
+    console.log('[DB] Initialisation des comptes de test...');
     const salt = bcrypt.genSaltSync(10);
     const pass = bcrypt.hashSync('beauxarts123', salt);
 
     const insU = db.prepare('INSERT INTO users (username, email, password_hash, school, atelier, bio) VALUES (?, ?, ?, ?, ?, ?)');
-    insU.run('camille_ensba', 'camille@beauxartsparis.fr', pass, 'Beaux-Arts de Paris', 'Atelier Peinture', '4e année');
+    insU.run('camille_ensba', 'camille@beauxartsparis.fr', pass, 'TALM-Tours', 'Atelier Peinture', '4e année');
     insU.run('julien_lyon', 'julien@ensba-lyon.fr', pass, 'ENSBA Lyon', 'Atelier Bois', 'Sculpture');
     insU.run('ines_ensad', 'ines@ensad.fr', pass, 'ÉnsAD Paris', 'Design Textile', 'Chutes de soies');
-
-    const insI = db.prepare('INSERT INTO items (user_id, title, category, exchange_type, price, location, description, image_url, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)');
-    insI.run(1, '5 Châssis entoilés en lin brut (80x100cm)', 'Toiles & Châssis', 'Gratuit', 0, 'Paris 6e - Beaux-Arts, Cour vitrée', 'Toiles prêtes à peindre. À venir chercher avant vendredi.', 'https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?w=800', 'available');
-    insI.run(2, 'Lot de chutes de contreplaqué bouleau', 'Bois', 'Gratuit', 0, 'Lyon - ENSBA, Atelier Menuiserie', 'Découpes propres d’environ 60x90cm pour maquettes ou socles.', 'https://images.unsplash.com/photo-1546484396-fb3fc6f95f98?w=800', 'available');
-    insI.run(3, 'Coupons de soie sauvage et feutre dense', 'Tissus & Fibres', 'Échange', 0, 'Paris 5e - Arts Déco', 'Chutes nobles. Échange contre pigments ou fil.', 'https://images.unsplash.com/photo-1584917865442-de89df76afd3?w=800', 'available');
   }
 }
 

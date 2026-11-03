@@ -29,7 +29,7 @@ app.use((req, res) => {
 
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`=================================================`);
-  console.log(` MATÉRIAUX — Bourse Circulaire des Beaux-Arts`);
+  console.log(` MATE — Échange · Beaux-Arts`);
   console.log(` Plateforme active : http://0.0.0.0:${PORT}`);
   console.log(`=================================================`);
 });
