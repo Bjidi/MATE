@@ -8,8 +8,52 @@ if (fs.existsSync(file)) {
   try { data = JSON.parse(fs.readFileSync(file, 'utf8')); } catch(e){}
 }
 
+// 支持云端 PostgreSQL 持久化同步（Render 等云平台数据永久不丢失）
+let pgPool = null;
+if (process.env.DATABASE_URL) {
+  try {
+    const { Pool } = require('pg');
+    pgPool = new Pool({
+      connectionString: process.env.DATABASE_URL,
+      ssl: process.env.DATABASE_URL.includes('localhost') ? false : { rejectUnauthorized: false }
+    });
+    console.log('[PG] Connexion PostgreSQL initialisée.');
+
+    pgPool.query(`
+      CREATE TABLE IF NOT EXISTS app_state (
+        key VARCHAR(50) PRIMARY KEY,
+        value JSONB NOT NULL,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+    `).then(() => {
+      return pgPool.query("SELECT value FROM app_state WHERE key = 'main_store'");
+    }).then(res => {
+      if (res.rows.length > 0 && res.rows[0].value) {
+        data = res.rows[0].value;
+        console.log(`[PG] Données restaurées depuis PostgreSQL : ${data.users.length} utilisateurs, ${data.items.length} matériaux.`);
+      } else {
+        pgPool.query(
+          "INSERT INTO app_state (key, value) VALUES ('main_store', $1) ON CONFLICT (key) DO NOTHING",
+          [JSON.stringify(data)]
+        );
+      }
+    }).catch(err => {
+      console.error('[PG INIT ERROR]', err.message);
+    });
+  } catch (err) {
+    console.error('[PG ERROR]', err.message);
+  }
+}
+
 const save = () => {
   try { fs.writeFileSync(file, JSON.stringify(data, null, 2)); } catch(e){}
+  if (pgPool) {
+    pgPool.query(
+      `INSERT INTO app_state (key, value, updated_at) VALUES ('main_store', $1, NOW())
+       ON CONFLICT (key) DO UPDATE SET value = $1, updated_at = NOW()`,
+      [JSON.stringify(data)]
+    ).catch(e => console.error('[PG SYNC ERROR]', e.message));
+  }
 };
 
 const nextId = (arr) => arr.length ? Math.max(...arr.map(x => x.id || 0)) + 1 : 1;
