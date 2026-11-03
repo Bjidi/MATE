@@ -65,6 +65,11 @@ const jsonDb = {
     return {
       get(...params) {
         if (q.includes('COUNT(*) as count FROM users')) return { count: data.users.length };
+        if (q.includes('FROM users WHERE email = ?')) {
+          const [e] = params;
+          const u = data.users.find(x => x.email.toLowerCase() === String(e).toLowerCase());
+          return u ? { id: u.id, username: u.username, email: u.email, school: u.school, atelier: u.atelier } : null;
+        }
         if (q.includes('FROM users WHERE username = ? OR email = ?')) {
           const [u, e] = params;
           return data.users.find(x => x.username.toLowerCase() === String(u).toLowerCase() || x.email.toLowerCase() === String(e).toLowerCase()) || null;
