@@ -229,9 +229,6 @@ router.post('/forgot-password', async (req, res) => {
     res.status(500).json({ error: 'Erreur lors de la demande de réinitialisation.' });
   }
 });
-    res.status(500).json({ error: 'Erreur lors de la demande de réinitialisation.' });
-  }
-});
 
 // 输入验证码与新密码，完成重置
 router.post('/reset-password', (req, res) => {
