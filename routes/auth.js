@@ -136,35 +136,40 @@ async function sendResetEmail(toEmail, code) {
         host,
         port: Number(process.env.SMTP_PORT) || 587,
         secure: process.env.SMTP_SECURE === 'true',
-        auth: { user, pass }
+        auth: { user, pass },
+        connectionTimeout: 5000,
+        greetingTimeout: 5000,
+        socketTimeout: 5000
       });
 
       await transporter.sendMail({
         from: process.env.SMTP_FROM || `"MATE Beaux-Arts" <${user}>`,
         to: toEmail,
         subject: '[MATE] Code de réinitialisation de mot de passe',
-        text: `Bonjour,\n\nVoici votre code à 6 chiffres pour réinitialiser votre mot de passe sur la plateforme MATE : ${code}\n\nCe code est valable pendant 15 minutes.\n\nSi vous n’êtes pas à l’origine de cette demande, ignorez cet email.\n\nL’équipe MATE`,
+        text: `Bonjour,\n\nVoici votre code à 6 chiffres pour réinitialiser votre mot de passe sur la plateforme MATE : ${code}\n\nCe code est valable pendant 15 minutes.\n\nSi vous n’êtes pas à l’origine de cette demande, ignorez cet email.\n\nL’équipe MATE\nContact : MATE-Arts@hotmail.com`,
         html: `
-          <div style="font-family:sans-serif; max-width:500px; border:2px solid #000; padding:2rem;">
-            <h1 style="font-size:1.5rem; margin-top:0;">MATE · Beaux-Arts</h1>
+          <div style="font-family:sans-serif; max-width:500px; border:2px solid #000; padding:2rem; background:#fff;">
+            <h1 style="font-size:1.5rem; margin-top:0; letter-spacing:-0.03em;">MATE · Beaux-Arts</h1>
             <p>Bonjour,</p>
             <p>Voici votre code de vérification pour réinitialiser votre mot de passe :</p>
-            <div style="font-size:2rem; font-weight:bold; letter-spacing:0.2em; padding:1rem; background:#f4f4f4; text-align:center; border:1px solid #000; margin:1.5rem 0;">
+            <div style="font-size:2.2rem; font-weight:900; letter-spacing:0.25em; padding:1.2rem; background:#f4f4f4; text-align:center; border:2px solid #000; margin:1.5rem 0; font-family:monospace;">
               ${code}
             </div>
-            <p style="font-size:0.85rem; color:#666;">Ce code est valable pendant 15 minutes.</p>
+            <p style="font-size:0.85rem; color:#666;">Ce code est strictement personnel et valable pendant 15 minutes.</p>
+            <hr style="border:none; border-top:1px solid #eee; margin:1.5rem 0;" />
+            <p style="font-size:0.75rem; color:#999;">MATE · Réseau d’échange pour les écoles d’art · Contact : MATE-Arts@hotmail.com</p>
           </div>
         `
       });
       console.log(`[EMAIL] Code envoyé avec succès à ${toEmail}`);
       return { sent: true };
     } catch (err) {
-      console.error('[EMAIL ERROR]', err);
+      console.error('[EMAIL ERROR]', err.message);
       return { sent: false, error: err.message };
     }
   } else {
-    console.log(`[EMAIL DEV MODE] SMTP non configuré. Code pour ${toEmail} : ${code}`);
-    return { sent: false, devMode: true };
+    console.log(`[EMAIL] SMTP non configuré. Veuillez définir SMTP_HOST, SMTP_USER, SMTP_PASS.`);
+    return { sent: false, notConfigured: true };
   }
 }
 
@@ -190,9 +195,21 @@ router.post('/forgot-password', async (req, res) => {
 
     const mailResult = await sendResetEmail(cleanEmail, code);
 
+    if (!mailResult.sent) {
+      if (mailResult.notConfigured) {
+        return res.status(503).json({
+          error: "Le service d'envoi d'emails est en attente de configuration SMTP. Contactez l'administrateur : MATE-Arts@hotmail.com."
+        });
+      } else {
+        return res.status(502).json({
+          error: "Impossible d'acheminer l'email actuellement. Veuillez vérifier votre adresse ou contacter MATE-Arts@hotmail.com."
+        });
+      }
+    }
+
+    // 发送成功：绝不向客户端暴露验证码数字！
     res.json({
-      message: 'Un code de vérification à 6 chiffres a été généré.',
-      dev_code: (!mailResult.sent || mailResult.devMode) ? code : undefined
+      message: 'Un code de vérification à 6 chiffres vous a été envoyé par email.'
     });
   } catch (err) {
     console.error('Forgot password error:', err);

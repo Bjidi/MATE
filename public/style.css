@@ -487,6 +487,84 @@ header {
   align-self: flex-start;
   background: var(--bg);
   color: var(--text);
+/* Minimalist Swiss Art School Footer */
+.site-footer {
+  border-top: 2px solid var(--border);
+  background: var(--bg);
+  margin-top: 5rem;
+  padding: 3rem 2rem 2.5rem;
+}
+
+.footer-container {
+  max-width: 1360px;
+  margin: 0 auto;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 2.5rem;
+}
+
+.footer-brand-box {
+  max-width: 480px;
+}
+
+.footer-tagline {
+  font-size: 0.88rem;
+  color: var(--text-muted);
+  line-height: 1.5;
+  margin-top: 0.6rem;
+}
+
+.footer-meta-box {
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+}
+
+.footer-meta-row {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+
+.footer-meta-label {
+  color: var(--text-muted);
+  font-size: 0.72rem;
+  text-transform: uppercase;
+}
+
+.footer-link {
+  color: var(--text);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  font-weight: 600;
+}
+
+.footer-link:hover {
+  background: var(--text);
+  color: var(--bg);
+  text-decoration: none;
+}
+
+.footer-author {
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  background: var(--text);
+  color: var(--bg);
+  padding: 0.15rem 0.5rem;
+}
+
+.footer-copyright {
+  margin-top: 0.8rem;
+  font-size: 0.68rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+}
+
 }
 
 .chat-input-area {

@@ -234,11 +234,36 @@ const app = {
   handleFileSelect(event) {
     const file = event.target.files[0];
     if (file) {
+      // 客户端压缩图片并转换为持久化 Base64，防止服务器重启丢失文件
       const reader = new FileReader();
       reader.onload = (e) => {
-        const preview = document.getElementById('image-preview');
-        preview.src = e.target.result;
-        preview.style.display = 'inline-block';
+        const img = new Image();
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          const maxDim = 1200;
+          let w = img.width;
+          let h = img.height;
+          if (w > maxDim || h > maxDim) {
+            if (w > h) {
+              h = Math.round((h * maxDim) / w);
+              w = maxDim;
+            } else {
+              w = Math.round((w * maxDim) / h);
+              h = maxDim;
+            }
+          }
+          canvas.width = w;
+          canvas.height = h;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, w, h);
+          const base64 = canvas.toDataURL('image/jpeg', 0.85);
+
+          this._compressedImageBase64 = base64;
+          const preview = document.getElementById('image-preview');
+          preview.src = base64;
+          preview.style.display = 'inline-block';
+        };
+        img.src = e.target.result;
       };
       reader.readAsDataURL(file);
     }
@@ -252,6 +277,9 @@ const app = {
 
     const form = event.target;
     const formData = new FormData(form);
+    if (this._compressedImageBase64) {
+      formData.set('image_url', this._compressedImageBase64);
+    }
 
     try {
       const res = await fetch('/api/items', {
@@ -261,9 +289,10 @@ const app = {
       });
       const data = await res.json();
       if (res.ok) {
+        this._compressedImageBase64 = null;
         this.closeModal('publish-modal');
         await this.loadItems();
-        alert('Votre annonce a été publiée dans la matériauthèque !');
+        alert('Votre annonce a été publiée avec succès !');
       } else {
         alert(data.error || 'Erreur lors de la publication.');
       }
@@ -271,7 +300,7 @@ const app = {
       alert('Erreur réseau.');
     } finally {
       btn.disabled = false;
-      btn.innerText = 'Diffuser l\'annonce';
+      btn.innerText = "Diffuser l'annonce";
     }
   },
 
@@ -538,6 +567,16 @@ const app = {
     const resetForm = document.getElementById('reset-form');
     const title = document.getElementById('auth-modal-title');
 
+    // 重置按钮文本与状态
+    if (forgotForm) {
+      const btn = forgotForm.querySelector('button[type="submit"]');
+      if (btn) { btn.disabled = false; btn.innerText = 'Envoyer le code'; }
+    }
+    if (resetForm) {
+      const btn = resetForm.querySelector('button[type="submit"]');
+      if (btn) { btn.disabled = false; btn.innerText = 'Confirmer le nouveau mot de passe'; }
+    }
+
     if (loginForm) loginForm.style.display = 'none';
     if (regForm) regForm.style.display = 'none';
     if (forgotForm) forgotForm.style.display = 'none';
@@ -566,7 +605,7 @@ const app = {
     if (!email) return;
 
     btn.disabled = true;
-    btn.innerText = 'Génération du code...';
+    btn.innerText = 'Envoi en cours...';
 
     try {
       const res = await fetch('/api/auth/forgot-password', {
@@ -576,22 +615,18 @@ const app = {
       });
       const data = await res.json();
       if (res.ok) {
-        // 存储正在重置密码的邮箱
         this._pendingResetEmail = email;
         const resetEmailInput = document.getElementById('reset-email-input');
         if (resetEmailInput) resetEmailInput.value = email;
 
-        if (data.dev_code) {
-          alert(`Code de vérification généré pour ${email} : ${data.dev_code}\n(En production avec SMTP configuré, le code arrive directement par email)`);
-        } else {
-          alert(`Un code de vérification à 6 chiffres a été envoyé à : ${email}`);
-        }
+        // 安全提示：仅告知已发送到邮箱，不暴露具体验证码数字！
+        alert(`Un code de vérification à 6 chiffres a été envoyé à l’adresse : ${email}\n\nVeuillez vérifier votre boîte de réception (ainsi que vos dossiers spams / courriers indésirables).`);
         this.toggleAuthMode('reset');
       } else {
         alert(data.error || 'Erreur lors de l’envoi.');
       }
     } catch (e) {
-      alert('Erreur réseau.');
+      alert('Erreur réseau ou délai d’attente dépassé.');
     } finally {
       btn.disabled = false;
       btn.innerText = 'Envoyer le code';

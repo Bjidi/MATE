@@ -91,8 +91,19 @@ router.post('/', authenticateToken, upload.single('image'), (req, res) => {
   }
 
   let image_url = '';
-  if (req.file) {
-    image_url = `/uploads/${req.file.filename}`;
+  if (req.body.image_url && req.body.image_url.startsWith('data:image/')) {
+    // 优先采用 Base64 数据，直接存入数据库，永不丢失！
+    image_url = req.body.image_url;
+  } else if (req.file) {
+    // 即使上传到磁盘，也同步转为 Base64 写入数据库，防止服务器重启后丢失图片文件
+    try {
+      const fs = require('node:fs');
+      const fileBuffer = fs.readFileSync(req.file.path);
+      const mime = req.file.mimetype || 'image/jpeg';
+      image_url = `data:${mime};base64,${fileBuffer.toString('base64')}`;
+    } catch (err) {
+      image_url = `/uploads/${req.file.filename}`;
+    }
   } else if (req.body.image_url) {
     image_url = req.body.image_url;
   }
